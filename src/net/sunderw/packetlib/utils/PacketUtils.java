@@ -1,11 +1,20 @@
 package net.sunderw.packetlib.utils;
 
+import net.sunderw.packetlib.Variables;
 import net.sunderw.packetlib.packets.Packet;
+import net.sunderw.packetlib.packets.client.login.C00PacketLogin;
+import net.sunderw.packetlib.packets.client.play.C01PacketChat;
+import net.sunderw.packetlib.packets.client.status.C00PacketRequest;
+import net.sunderw.packetlib.packets.client.status.C01PacketPing;
+import net.sunderw.packetlib.packets.server.status.S00PacketResponse;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PacketUtils {
 
