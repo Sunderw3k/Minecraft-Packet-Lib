@@ -1,16 +1,13 @@
 package net.sunderw.packetlib.packets.client.play;
 
-import net.sunderw.packetlib.packets.client.status.C01PacketPing;
-import net.sunderw.packetlib.utils.PacketUtils;
+import net.sunderw.packetlib.streams.PacketInputStream;
 import net.sunderw.packetlib.packets.Packet;
-
-import java.io.DataInputStream;
 
 public final class C01PacketChat extends Packet {
 
-    private String message;
+    public String message;
 
-    public C01PacketChat(DataInputStream stream) {
+    public C01PacketChat(PacketInputStream stream) {
         super(0x01, stream);
     }
 
@@ -27,16 +24,16 @@ public final class C01PacketChat extends Packet {
         try {
             stream.writeByte(id);
 
-            PacketUtils.writeString(stream, message);
+            stream.writeString(message);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected void read(DataInputStream stream) {
+    protected void read(PacketInputStream stream) {
         try {
-           this.message = PacketUtils.readString(stream);
+           this.message = stream.readString();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

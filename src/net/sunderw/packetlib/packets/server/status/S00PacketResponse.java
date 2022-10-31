@@ -1,15 +1,13 @@
 package net.sunderw.packetlib.packets.server.status;
 
 import net.sunderw.packetlib.packets.Packet;
-import net.sunderw.packetlib.utils.PacketUtils;
-
-import java.io.DataInputStream;
+import net.sunderw.packetlib.streams.PacketInputStream;
 
 public final class S00PacketResponse extends Packet {
 
-    private String json;
+    public String json;
 
-    public S00PacketResponse(DataInputStream stream) {
+    public S00PacketResponse(PacketInputStream stream) {
         super(0x00, stream);
     }
 
@@ -26,16 +24,16 @@ public final class S00PacketResponse extends Packet {
         try {
             stream.writeByte(id);
 
-            PacketUtils.writeString(stream, json);
+            stream.writeString(json);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected void read(DataInputStream stream) {
+    protected void read(PacketInputStream stream) {
         try {
-            this.json = PacketUtils.readString(stream);
+            this.json = stream.readString();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

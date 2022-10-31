@@ -1,4 +1,4 @@
-package net.sunderw.packetlib.packets;
+package net.sunderw.packetlib.streams;
 
 import java.io.DataInputStream;
 import java.io.IOException;

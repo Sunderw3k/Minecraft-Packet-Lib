@@ -1,88 +1,16 @@
 package net.sunderw.packetlib.utils;
 
-import net.sunderw.packetlib.Variables;
 import net.sunderw.packetlib.packets.Packet;
-import net.sunderw.packetlib.packets.client.login.C00PacketLogin;
-import net.sunderw.packetlib.packets.client.play.C01PacketChat;
-import net.sunderw.packetlib.packets.client.status.C00PacketRequest;
-import net.sunderw.packetlib.packets.client.status.C01PacketPing;
-import net.sunderw.packetlib.packets.server.status.S00PacketResponse;
+import net.sunderw.packetlib.packets.PacketRegistry;
+import net.sunderw.packetlib.streams.PacketInputStream;
+import net.sunderw.packetlib.streams.PacketOutputStream;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 public class PacketUtils {
 
-    private static final int SEGMENT_BITS = 0x7F;
-    private static final int CONTINUE_BIT = 0x80;
-
-    /**
-     * Writes the String <code>value</code> to the <code>out</code> stream
-     * @param out The output stream to write to
-     * @param value The value to write
-     * @throws IOException When writing the bytes has failed
-     */
-    public static void writeString(DataOutputStream out, String value) throws IOException {
-        writeVarInt(out, value.length());
-        out.writeBytes(value);
-    }
-
-    /**
-     * Writes the VarInt <code>value</code> to the <code>out</code> stream
-     * @param out The output stream to write to
-     * @param value The value to write
-     * @throws IOException When writing the bytes has failed
-     */
-    public static void writeVarInt(DataOutputStream out, int value) throws IOException {
-        while (true) {
-            if ((value & ~SEGMENT_BITS) == 0) {
-                out.writeByte(value);
-                return;
-            }
-
-            out.writeByte((value & SEGMENT_BITS) | CONTINUE_BIT);
-            value >>>= 7;
-        }
-    }
-
-    /**
-     * Reads a String from the <code>out</code> stream
-     * @param in The input stream to read from
-     * @throws IOException When writing the bytes has failed
-     */
-    public static String readString(DataInputStream in) throws IOException {
-        int length = PacketUtils.readVarInt(in);
-        return new String(in.readNBytes(length), StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Reads a VarInt from the <code>out</code> stream
-     * @param in The input stream to read from
-     * @throws IOException When writing the bytes has failed
-     */
-    public static int readVarInt(DataInputStream in) throws IOException {
-        int value = 0;
-        int position = 0;
-        byte currentByte;
-
-        while (true) {
-            currentByte = in.readByte();
-            value |= (currentByte & SEGMENT_BITS) << position;
-
-            if ((currentByte & CONTINUE_BIT) == 0) break;
-
-            position += 7;
-
-            if (position >= 32) throw new RuntimeException("VarInt is too big");
-        }
-
-        return value;
-    }
+    public static final int SEGMENT_BITS = 0x7F;
+    public static final int CONTINUE_BIT = 0x80;
 
     /**
      * Writes a full uncompressed packet <code>packet</code> into the output stream <code>out</code>
@@ -90,8 +18,8 @@ public class PacketUtils {
      * @param packet The packet to write
      * @throws IOException When writing the bytes has failed
      */
-    public static <T extends Packet> void sendPacketUncompressed(DataOutputStream out, T packet) throws IOException {
-        writeVarInt(out, packet.getBuffer().toByteArray().length);
+    public static <T extends Packet> void sendPacketUncompressed(PacketOutputStream out, T packet) throws IOException {
+        out.writeVarInt(packet.getBuffer().toByteArray().length);
         out.write(packet.getBuffer().toByteArray());
         out.flush();
     }
@@ -102,14 +30,34 @@ public class PacketUtils {
      * @param packet The packet to write
      * @throws IOException When writing the bytes has failed
      */
-    public static <T extends Packet> void sendPacketCompressed(DataOutputStream out, T packet) throws IOException {
+    public static <T extends Packet> void sendPacketCompressed(PacketOutputStream out, T packet) throws IOException {
         if (packet.getBuffer().toByteArray().length <= 256) {
-            writeVarInt(out, packet.getBuffer().toByteArray().length + 1);
-            writeVarInt(out, 0);
+            out.writeVarInt(packet.getBuffer().toByteArray().length + 1);
+            out.writeVarInt(0);
             out.write(packet.getBuffer().toByteArray());
             out.flush();
         } else {
             throw new RuntimeException("Packet too long (WIP)");
+        }
+    }
+
+    /**
+     * Reads an uncompressed <code>packet</code> from the input stream <code>in</code>
+     * @param in The input stream to read from
+     * @param connectionState The server connection state (1 = STATUS, 2 = LOGIN, 3 = PLAY)
+     * @param fromServer Whether the packet is from the server
+     * @return The recieved packet
+     * @throws IOException When reading the bytes has failed
+     */
+    public static <T extends Packet> T readPacketUncompressed(PacketInputStream in, int connectionState, boolean fromServer) throws IOException {
+        int size = in.readVarInt();
+        int packetId = in.readVarInt();
+
+        try {
+            //noinspection unchecked
+            return (T) PacketRegistry.getPacketByID(packetId, connectionState, fromServer).getDeclaredConstructor(PacketInputStream.class).newInstance(in);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

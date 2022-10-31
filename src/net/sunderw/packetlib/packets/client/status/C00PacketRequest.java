@@ -1,12 +1,11 @@
 package net.sunderw.packetlib.packets.client.status;
 
 import net.sunderw.packetlib.packets.Packet;
-
-import java.io.DataInputStream;
+import net.sunderw.packetlib.streams.PacketInputStream;
 
 public final class C00PacketRequest extends Packet {
 
-    public C00PacketRequest(DataInputStream stream) {
+    public C00PacketRequest(PacketInputStream stream) {
         super(0x00, stream);
     }
 
@@ -26,7 +25,7 @@ public final class C00PacketRequest extends Packet {
     }
 
     @Override
-    protected void read(DataInputStream stream) {
+    protected void read(PacketInputStream stream) {
 
     }
 }

@@ -1,16 +1,13 @@
 package net.sunderw.packetlib.packets.client.login;
 
-import net.sunderw.packetlib.packets.client.status.C00PacketRequest;
-import net.sunderw.packetlib.utils.PacketUtils;
 import net.sunderw.packetlib.packets.Packet;
-
-import java.io.DataInputStream;
+import net.sunderw.packetlib.streams.PacketInputStream;
 
 public final class C00PacketLogin extends Packet {
 
-    private String username;
+    public String username;
 
-    public C00PacketLogin(DataInputStream stream) {
+    public C00PacketLogin(PacketInputStream stream) {
         super(0x00, stream);
     }
 
@@ -27,16 +24,16 @@ public final class C00PacketLogin extends Packet {
         try {
             stream.writeByte(id);
 
-            PacketUtils.writeString(stream, username);
+            stream.writeString(username);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected void read(DataInputStream stream) {
+    protected void read(PacketInputStream stream) {
         try {
-            this.username = PacketUtils.readString(stream);
+            this.username = stream.readString();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
